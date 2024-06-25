@@ -10,17 +10,16 @@ interface CreateUserParams {
   clerkId: string;
   email: string;
   username: string;
+  firstName: string;
+  lastName: string;
   photo: string;
-  firstName?: string;
-  lastName?: string;
 }
 
 interface UpdateUserParams {
-  email?: string;
-  username?: string;
-  photo?: string;
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  photo: string;
 }
 
 export async function POST(req: Request) {

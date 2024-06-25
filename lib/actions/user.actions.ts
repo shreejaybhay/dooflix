@@ -1,5 +1,7 @@
 import User from "../database/models/user.model";
 import { connect } from "../database/db";
+import { revalidatePath } from "next/cache";
+import { handleError } from "../utils";
 
 interface CreateUserParams {
   clerkId: string;
@@ -22,11 +24,12 @@ interface UpdateUserParams {
 export async function createUser(user: CreateUserParams) {
   try {
     await connect();
+
     const newUser = await User.create(user);
-    return newUser.toJSON();
+
+    return JSON.parse(JSON.stringify(newUser));
   } catch (error) {
-    console.error("Error creating user:", error);
-    throw new Error("Failed to create user");
+    handleError(error);
   }
 }
 
@@ -34,12 +37,14 @@ export async function createUser(user: CreateUserParams) {
 export async function getUserById(userId: string) {
   try {
     await connect();
+
     const user = await User.findOne({ clerkId: userId });
+
     if (!user) throw new Error("User not found");
-    return user.toJSON();
+
+    return JSON.parse(JSON.stringify(user));
   } catch (error) {
-    console.error("Error fetching user:", error);
-    throw new Error("Failed to fetch user");
+    handleError(error);
   }
 }
 
@@ -47,14 +52,16 @@ export async function getUserById(userId: string) {
 export async function updateUser(clerkId: string, user: UpdateUserParams) {
   try {
     await connect();
+
     const updatedUser = await User.findOneAndUpdate({ clerkId }, user, {
       new: true,
     });
+
     if (!updatedUser) throw new Error("User update failed");
-    return updatedUser.toJSON();
+
+    return JSON.parse(JSON.stringify(updatedUser));
   } catch (error) {
-    console.error("Error updating user:", error);
-    throw new Error("Failed to update user");
+    handleError(error);
   }
 }
 
@@ -62,17 +69,20 @@ export async function updateUser(clerkId: string, user: UpdateUserParams) {
 export async function deleteUser(clerkId: string) {
   try {
     await connect();
+
+    // Find user to delete
     const userToDelete = await User.findOne({ clerkId });
+
     if (!userToDelete) {
       throw new Error("User not found");
     }
+
+    // Delete user
     const deletedUser = await User.findByIdAndDelete(userToDelete._id);
-    if (!deletedUser) {
-      throw new Error("Failed to delete user");
-    }
-    return deletedUser.toJSON();
+    revalidatePath("/");
+
+    return deletedUser ? JSON.parse(JSON.stringify(deletedUser)) : null;
   } catch (error) {
-    console.error("Error deleting user:", error);
-    throw new Error("Failed to delete user");
+    handleError(error);
   }
 }
